@@ -1,4 +1,4 @@
-Projekat - faza 1: https://github.com/mi1anche/SistemskoProgramiranje
+Projekat - faza 1: https://github.com/mi1anche/Projekat1
 
 Realizacija pomoću Task-ova.
 

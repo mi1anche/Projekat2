@@ -98,14 +98,14 @@ namespace DrugiProjekat.Services
                 catch (Exception ex)
                 {
                     _cache.RemovePlaceholder(cacheKey);
-                    throw new Exception($"Greska pri pozivu SpaceX API-a: {ex.Message}", ex);
+                    throw new Exception($"Greska pri pozivu Nasa API-a: {ex.Message}", ex);
                 }
             }
             catch (HttpRequestException ex)
             {
                 Logger.Error($"[Proces #{workerId}] HTTP greska za zahtev {request.RequestId}: {ex.Message}");
                 Interlocked.Increment(ref _errorCount);
-                request.ResponseSource.SetResult((502, $"{{\"error\": \"SpaceX API nije dostupan: {EscapeJson(ex.Message)}\"}}"));
+                request.ResponseSource.SetResult((502, $"{{\"error\": \"Nasa API nije dostupan: {EscapeJson(ex.Message)}\"}}"));
             }
             catch (Exception ex)
             {
