@@ -8,10 +8,10 @@ namespace DrugiProjekat.Models
 {
     public class CacheEntry
     {
-        public List<LaunchResult> Results { get; set; }
+        public List<WeatherResult> Results { get; set; }
         public bool IsLoading { get; set; }
 
-        public CacheEntry(List<LaunchResult> results)
+        public CacheEntry(List<WeatherResult> results)
         {
             Results = results;
             IsLoading = false;
@@ -19,7 +19,7 @@ namespace DrugiProjekat.Models
 
         public CacheEntry()
         {
-            Results = new List<LaunchResult>();
+            Results = new List<WeatherResult>();
             IsLoading = true;
         }
     }

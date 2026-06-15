@@ -8,7 +8,7 @@ namespace DrugiProjekat
         static async Task Main(string[] args)
         {
             Logger.Info("===========================================");
-            Logger.Info("              SpaceX Server                ");
+            Logger.Info("               Nasa Server                 ");
             Logger.Info("===========================================");
 
             string prefix = "http://localhost:8080/";
@@ -21,7 +21,7 @@ namespace DrugiProjekat
             var httpClient = new HttpClient();
             var queue = new RequestQueue();
             var cache = new LaunchCache(cacheSize);
-            var apiService = new SpaceXApiService(httpClient);
+            var apiService = new NasaApiService(httpClient);
             var processor = new RequestProcessor(queue, cache, apiService, radneNiti);
             var server = new WebServer(prefix, queue, processor);
 

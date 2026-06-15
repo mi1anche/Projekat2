@@ -14,14 +14,12 @@ namespace DrugiProjekat.Services
     {
         private readonly RequestQueue _queue;
         private readonly LaunchCache _cache;
-        private readonly SpaceXApiService _apiService;
+        private readonly NasaApiService _apiService;
         private readonly int _radneNiti;
 
         private int _processedCount = 0;
         private int _errorCount = 0;
-
-        public RequestProcessor(RequestQueue queue, LaunchCache cache,
-                                SpaceXApiService apiService, int radneNiti = 4)
+        public RequestProcessor(RequestQueue queue, LaunchCache cache, NasaApiService apiService, int radneNiti = 4)
         {
             _queue = queue;
             _cache = cache;
@@ -65,7 +63,7 @@ namespace DrugiProjekat.Services
                 var cached = _cache.TryGet(cacheKey);
                 if (cached != null)
                 {
-                    Logger.Req($"[Proces #{workerId}] Zahtev {request.RequestId} opsluzem iz kesa ({cached.Count} letova)");
+                    Logger.Req($"[Proces #{workerId}] Zahtev {request.RequestId} opsluzem iz kesa ({cached.Count} solova)");
                     request.ResponseSource.SetResult((200, SerializeResults(cached)));
                     Interlocked.Increment(ref _processedCount);
                     return;
@@ -80,7 +78,7 @@ namespace DrugiProjekat.Services
                     var loggedTask = fetchTask.ContinueWith(t =>
                     {
                         if (t.IsCompletedSuccessfully)
-                            Logger.Info($"[ContinueWith] API vratio {t.Result.Count} letova za kljuc '{cacheKey}'");
+                            Logger.Info($"[ContinueWith] API vratio {t.Result.Count} solova za kljuc '{cacheKey}'");
                         else
                             Logger.Warn($"[ContinueWith] API poziv nije uspeo: {t.Exception?.InnerException?.Message}");
 
@@ -95,7 +93,7 @@ namespace DrugiProjekat.Services
                     _cache.Set(cacheKey, results);
                     request.ResponseSource.SetResult((200, SerializeResults(results)));
                     Interlocked.Increment(ref _processedCount);
-                    Logger.Req($"[Proces #{workerId}] Zahtev {request.RequestId} uspesno obradjen ({results.Count} letova)");
+                    Logger.Req($"[Proces #{workerId}] Zahtev {request.RequestId} uspesno obradjen ({results.Count} solova)");
                 }
                 catch (Exception ex)
                 {
@@ -125,10 +123,10 @@ namespace DrugiProjekat.Services
             return string.Join("&", sorted);
         }
 
-        private string SerializeResults(List<LaunchResult> results)
+        private string SerializeResults(List<WeatherResult> results)
         {
             if (results.Count == 0)
-                return "{\"message\": \"Nisu pronadjeni letovi koji odgovaraju zadatim filterima.\", \"count\": 0, \"results\": []}";
+                return "{\"message\": \"Nisu pronadjeni solovi koji odgovaraju zadatim filterima.\", \"count\": 0, \"results\": []}";
             return JsonConvert.SerializeObject(new { count = results.Count, results }, Newtonsoft.Json.Formatting.Indented);
         }
 

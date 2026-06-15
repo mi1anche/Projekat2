@@ -31,11 +31,12 @@ namespace DrugiProjekat.Services
             _isRunning = true;
             Logger.Info($"Server pokrenut. Slusa na: {string.Join(", ", _listener.Prefixes)}");
             Logger.Info("Dostupne rute:");
-            Logger.Info("GET /launches           -> svi letovi");
-            Logger.Info("GET /launches?name=...  -> filtriranje po imenu");
-            Logger.Info("GET /launches?success=true/false");
-            Logger.Info("GET /launches?year=2022");
-            Logger.Info("GET /launches?flight_number=5");
+            Logger.Info("GET /launches           -> svi solovi");
+            Logger.Info("GET /launches?sol=675   -> filtriranje po solu");
+            Logger.Info("GET /launches?season=fall");
+            Logger.Info("GET /launches?wind_direction=WNW");
+            Logger.Info("GET /launches?min_avg_temp=-65");
+            Logger.Info("GET /launches?max_avg_temp=-60");
             Logger.Info("GET /status             -> statistike servera");
 
             _processor.Start();

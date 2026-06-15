@@ -34,7 +34,7 @@ namespace DrugiProjekat.Services
         // Monitor.Wait privremeno oslobadja lock da druge niti mogu da rade
         // podaci su gotovi, broji hit i vraca rezultate
 
-        public List<LaunchResult>? TryGet(string key)
+        public List<WeatherResult>? TryGet(string key)
         {
             lock (_cacheLock)
             {
@@ -81,13 +81,13 @@ namespace DrugiProjekat.Services
 
         // ovde se upisuju podaci
         // bude se sve niti koje cekaju u redu da mogu da procitaju rezultate
-        public void Set(string key, List<LaunchResult> results)
+        public void Set(string key, List<WeatherResult> results)
         {
             lock (_cacheLock)
             {
                 _cache[key] = new CacheEntry(results);
 
-                Logger.Cache($"Sacuvano {results.Count} letova za '{key}' | velicina={_cache.Count}/{_maxSize}");
+                Logger.Cache($"Sacuvano {results.Count} solova za '{key}' | velicina={_cache.Count}/{_maxSize}");
                 Monitor.PulseAll(_cacheLock);
             }
         }
