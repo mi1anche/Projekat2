@@ -33,8 +33,6 @@ namespace DrugiProjekat.Services
 
             string body = await response.Content.ReadAsStringAsync();
             var json = JObject.Parse(body);
-
-            // sol_keys je lista kljuceva koji predstavljaju solove npr ["675","676",...]
             var solKeys = json["sol_keys"]?.ToObject<List<string>>() ?? new List<string>();
 
             Logger.Info($"Primljeno {solKeys.Count} solova sa API-a, primenjujem filtere...");
