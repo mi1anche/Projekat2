@@ -12,17 +12,17 @@ namespace DrugiProjekat
             Logger.Info("===========================================");
 
             string prefix = "http://localhost:8080/";
-            int radneNiti = 4;
+            int maxParalelnihObrada = 4;
             int cacheSize = 10;
 
-            Logger.Info($"Radne niti (Tasks): {radneNiti}");
+            Logger.Info($"Maks. paralelnih obrada: {maxParalelnihObrada}");
             Logger.Info($"Maks. velicina kesa: {cacheSize} unosa");
 
             var httpClient = new HttpClient();
             var queue = new RequestQueue();
             var cache = new LaunchCache(cacheSize);
             var apiService = new NasaApiService(httpClient);
-            var processor = new RequestProcessor(queue, cache, apiService, radneNiti);
+            var processor = new RequestProcessor(queue, cache, apiService, maxParalelnihObrada);
             var server = new WebServer(prefix, queue, processor);
 
             Console.CancelKeyPress += (_, e) =>
@@ -30,6 +30,7 @@ namespace DrugiProjekat
                 e.Cancel = true;
                 Logger.Info("Gasenje servera...");
                 server.Stop();
+                processor.Stop();
                 processor.PrintStats();
                 Environment.Exit(0);
             };

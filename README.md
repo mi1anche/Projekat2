@@ -8,4 +8,4 @@ se može vršiti pomoću filtera koji se zadaju u okviru query-a. Spisak letova 
 uslov se vraćaju kao odgovor klijentu. Svi zahtevi server se šalju preko browsera korišćenjem GET
 metode. Ukoliko navedene informacije ne postoje, prikazati grešku korisniku.
 Način funkcionisanja SpaceX API-a je moguće proučiti na sledećem linku: https://github.com/rspacex/SpaceX-API
-Primer poziva serveru: https://api.spacexdata.com/v5/launches/past
+Primer poziva serveru: https://api.spacexdata.com/v5/weather/past

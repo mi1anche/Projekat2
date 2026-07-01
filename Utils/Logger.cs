@@ -12,10 +12,6 @@ namespace DrugiProjekat.Utils
         private static StreamWriter? _fileWriter;
         private static readonly string _logPath;
 
-        // ovde se pravi putanja root foldera prvo
-        // posle se pravi putanja za log folder
-        // u log folderu se kreiraju fajlovi kao server_datetime.log
-        // i nakon toga se otvara fajl za pisanje
         static Logger()
         {
             string projectRoot = Path.GetFullPath(
@@ -26,8 +22,6 @@ namespace DrugiProjekat.Utils
             _fileWriter = new StreamWriter(_logPath, append: true) { AutoFlush = true };
         }
 
-
-        // ovde se prave linije tako sto se stavlja datum, level poruke poravnat levo za 5 mesta i thread id poravnat desno za 3 mesta, i poruka
         private static void Write(string level, string message)
         {
             string line = $"[{DateTime.Now:HH:mm:ss.fff}] [{level,-5}] [{Thread.CurrentThread.ManagedThreadId,3}] {message}";
@@ -50,8 +44,6 @@ namespace DrugiProjekat.Utils
             }
         }
 
-
-        // metode za ispisivanje poruke
         public static void Info(string msg) => Write("INFO", msg);
         public static void Warn(string msg) => Write("WARN", msg);
         public static void Error(string msg) => Write("ERROR", msg);

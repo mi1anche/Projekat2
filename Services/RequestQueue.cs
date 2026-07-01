@@ -16,10 +16,6 @@ namespace DrugiProjekat.Services
 
         private const int MaxQueueSize = 100;
 
-        // ovde dodajemo zahtev u red cekanja
-        // ako je pun vraca se log i false, odnosno odbija se zahtev
-        // ako nije pun dodaje se zahtev i budi se jedna nit
-        // vraca bool da se zna da li je zahtev primljen/odbijen
         public bool Enqueue(ClientRequest request)
         {
             lock (_queueLock)
@@ -37,10 +33,6 @@ namespace DrugiProjekat.Services
                 return true;
             }
         }
-
-        // ovde se preuzima zahtev iz reda
-        // dok god je prazan i server je aktivan on ceka
-        // ako je red prazan i server je ugasen vraca null
 
         public ClientRequest? Dequeue()
         {
@@ -61,7 +53,6 @@ namespace DrugiProjekat.Services
             }
         }
 
-        // budi sve niti, svaka nit proverava red, vidi da je prazan i postavlja _isRunning na false, odnosno zavrsava rad
         public void Shutdown()
         {
             lock (_queueLock)
@@ -70,11 +61,6 @@ namespace DrugiProjekat.Services
                 Monitor.PulseAll(_queueLock);
                 Logger.Info("Red zahteva je ugasen.");
             }
-        }
-
-        public int Count
-        {
-            get { lock (_queueLock) { return _queue.Count; } }
         }
     }
 }

@@ -8,9 +8,6 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-using Newtonsoft.Json.Linq;
-using DrugiProjekat.Models;
-using DrugiProjekat.Utils;
 
 namespace DrugiProjekat.Services
 {

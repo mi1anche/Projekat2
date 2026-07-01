@@ -31,12 +31,12 @@ namespace DrugiProjekat.Services
             _isRunning = true;
             Logger.Info($"Server pokrenut. Slusa na: {string.Join(", ", _listener.Prefixes)}");
             Logger.Info("Dostupne rute:");
-            Logger.Info("GET /launches           -> svi solovi");
-            Logger.Info("GET /launches?sol=675   -> filtriranje po solu");
-            Logger.Info("GET /launches?season=fall");
-            Logger.Info("GET /launches?wind_direction=WNW");
-            Logger.Info("GET /launches?min_avg_temp=-65");
-            Logger.Info("GET /launches?max_avg_temp=-60");
+            Logger.Info("GET /weather           -> svi solovi");
+            Logger.Info("GET /weather?sol=675   -> filtriranje po solu");
+            Logger.Info("GET /weather?season=fall");
+            Logger.Info("GET /weather?wind_direction=WNW");
+            Logger.Info("GET /weather?min_avg_temp=-65");
+            Logger.Info("GET /weather?max_avg_temp=-60");
             Logger.Info("GET /status             -> statistike servera");
 
             _processor.Start();
@@ -90,13 +90,22 @@ namespace DrugiProjekat.Services
                     return;
                 }
 
-                if (path != "/launches")
+                if (path != "/weather")
                 {
-                    SendResponse(resp, 404, "{\"error\": \"Ruta nije pronadjena. Koristite /launches ili /status\"}");
+                    SendResponse(resp, 404, "{\"error\": \"Ruta nije pronadjena. Koristite /weather ili /status\"}");
                     return;
                 }
 
-                var filters = ParseFilters(req.Url?.Query ?? "");
+                Dictionary<string, string> filters;
+                try
+                {
+                    filters = ParseFilters(req.Url?.Query ?? "");
+                }
+                catch (ArgumentException ex)
+                {
+                    SendResponse(resp, 400, $"{{\"error\": \"{ex.Message.Replace("\"", "'")}\"}}");
+                    return;
+                }
                 string requestId = $"REQ-{Interlocked.Increment(ref _requestCounter):D5}";
                 string query = req.Url?.Query ?? "";
 
@@ -145,6 +154,10 @@ namespace DrugiProjekat.Services
                     string value = Uri.UnescapeDataString(kv[1]).Trim();
                     if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value))
                         filters[key] = value;
+                }
+                else
+                {
+                    throw new ArgumentException($"Nevalidan format filtera: '{part}'. Ocekivan format je kljuc=vrednost.");
                 }
             }
 

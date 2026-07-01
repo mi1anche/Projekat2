@@ -4,8 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
 using Newtonsoft.Json;
 
 namespace DrugiProjekat.Services
@@ -15,46 +15,64 @@ namespace DrugiProjekat.Services
         private readonly RequestQueue _queue;
         private readonly LaunchCache _cache;
         private readonly NasaApiService _apiService;
-        private readonly int _radneNiti;
+        private readonly SemaphoreSlim _semaphore;
+        private readonly int _maxParalelnihObrada;
+        private readonly Thread _dispatcherThread;
 
         private int _processedCount = 0;
         private int _errorCount = 0;
-        public RequestProcessor(RequestQueue queue, LaunchCache cache, NasaApiService apiService, int radneNiti = 4)
+
+        public RequestProcessor(RequestQueue queue, LaunchCache cache, NasaApiService apiService, int maxParalelnihObrada = 4)
         {
             _queue = queue;
             _cache = cache;
             _apiService = apiService;
-            _radneNiti = radneNiti;
+            _maxParalelnihObrada = maxParalelnihObrada;
+            _semaphore = new SemaphoreSlim(maxParalelnihObrada, maxParalelnihObrada);
+
+            _dispatcherThread = new Thread(DispatchLoop)
+            {
+                Name = "Dispatcher",
+                IsBackground = true
+            };
         }
 
         public void Start()
         {
-            Logger.Info($"[Proces] Pokretanje {_radneNiti} worker Task-ova...");
-            for (int i = 0; i < _radneNiti; i++)
-            {
-                int workerId = i + 1;
-                Task.Run(() => WorkerLoop(workerId));
-            }
+            _dispatcherThread.Start();
+            Logger.Info($"[Proces] Dispecer pokrenut. Maks. paralelnih obrada: {_maxParalelnihObrada}");
         }
 
-        private void WorkerLoop(int workerId)
+        private void DispatchLoop()
         {
-            Logger.Info($"[Proces] Worker Task #{workerId} pokrenut (Thread {Thread.CurrentThread.ManagedThreadId})");
             while (true)
             {
                 ClientRequest? request = _queue.Dequeue();
                 if (request == null)
-                {
-                    Logger.Info($"[Proces] Worker Task #{workerId} se gasi.");
                     break;
-                }
-                ProcessRequestAsync(workerId, request).GetAwaiter().GetResult();
+
+                _semaphore.Wait();
+
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await ProcessRequestAsync(request);
+                    }
+                    finally
+                    {
+                        _semaphore.Release();
+                    }
+                });
             }
+
+            Logger.Info("[Proces] Dispecer se gasi.");
         }
 
-        private async Task ProcessRequestAsync(int workerId, ClientRequest request)
+        private async Task ProcessRequestAsync(ClientRequest request)
         {
-            Logger.Req($"[Proces #{workerId}] Obrada zahteva {request.RequestId} | query='{request.Query}'");
+            int taskId = Task.CurrentId ?? -1;
+            Logger.Req($"[Task {taskId}] Obrada zahteva {request.RequestId} | query='{request.Query}'");
 
             try
             {
@@ -63,7 +81,7 @@ namespace DrugiProjekat.Services
                 var cached = _cache.TryGet(cacheKey);
                 if (cached != null)
                 {
-                    Logger.Req($"[Proces #{workerId}] Zahtev {request.RequestId} opsluzem iz kesa ({cached.Count} solova)");
+                    Logger.Req($"[Task {taskId}] Zahtev {request.RequestId} opsluzem iz kesa ({cached.Count} solova)");
                     request.ResponseSource.SetResult((200, SerializeResults(cached)));
                     Interlocked.Increment(ref _processedCount);
                     return;
@@ -93,7 +111,7 @@ namespace DrugiProjekat.Services
                     _cache.Set(cacheKey, results);
                     request.ResponseSource.SetResult((200, SerializeResults(results)));
                     Interlocked.Increment(ref _processedCount);
-                    Logger.Req($"[Proces #{workerId}] Zahtev {request.RequestId} uspesno obradjen ({results.Count} solova)");
+                    Logger.Req($"[Task {taskId}] Zahtev {request.RequestId} uspesno obradjen ({results.Count} solova)");
                 }
                 catch (Exception ex)
                 {
@@ -103,13 +121,13 @@ namespace DrugiProjekat.Services
             }
             catch (HttpRequestException ex)
             {
-                Logger.Error($"[Proces #{workerId}] HTTP greska za zahtev {request.RequestId}: {ex.Message}");
+                Logger.Error($"[Task {taskId}] HTTP greska za zahtev {request.RequestId}: {ex.Message}");
                 Interlocked.Increment(ref _errorCount);
                 request.ResponseSource.SetResult((502, $"{{\"error\": \"Nasa API nije dostupan: {EscapeJson(ex.Message)}\"}}"));
             }
             catch (Exception ex)
             {
-                Logger.Error($"[Proces #{workerId}] Greska pri obradi zahteva {request.RequestId}: {ex.Message}");
+                Logger.Error($"[Task {taskId}] Greska pri obradi zahteva {request.RequestId}: {ex.Message}");
                 Interlocked.Increment(ref _errorCount);
                 request.ResponseSource.SetResult((500, $"{{\"error\": \"Interna greska servera: {EscapeJson(ex.Message)}\"}}"));
             }
@@ -131,6 +149,16 @@ namespace DrugiProjekat.Services
         }
 
         private string EscapeJson(string s) => s.Replace("\"", "\\\"").Replace("\n", " ");
+
+        public void Stop()
+        {
+            _dispatcherThread.Join();
+
+            for (int i = 0; i < _maxParalelnihObrada; i++)
+                _semaphore.Wait();
+
+            Logger.Info("[Proces] Dispecer zaustavljen, sve obrade dovrsene.");
+        }
 
         public void PrintStats()
         {

@@ -27,13 +27,6 @@ namespace DrugiProjekat.Services
             Logger.Cache($"Inicijalizovan sa max velicinom: {_maxSize} unosa");
         }
 
-
-        // TryGet trazi podatke iz kesa
-        // ako ne kljuc postojivraca null vrednost
-        // ako postoji ali je isLoading=true, ceka dok druga nit ne zavrsi ucitavanje
-        // Monitor.Wait privremeno oslobadja lock da druge niti mogu da rade
-        // podaci su gotovi, broji hit i vraca rezultate
-
         public List<WeatherResult>? TryGet(string key)
         {
             lock (_cacheLock)
@@ -56,11 +49,6 @@ namespace DrugiProjekat.Services
             }
         }
 
-
-        // rezervise mesto pre api poziva
-        // ako postoji key u kesu, ne radi nista i izlazi
-        // ako je kes pun izbaci najstariji unos
-        // zatim zauzima mesto sa praznim CacheEntry
         public void ReservePlaceholder(string key)
         {
             lock (_cacheLock)
@@ -79,8 +67,6 @@ namespace DrugiProjekat.Services
             }
         }
 
-        // ovde se upisuju podaci
-        // bude se sve niti koje cekaju u redu da mogu da procitaju rezultate
         public void Set(string key, List<WeatherResult> results)
         {
             lock (_cacheLock)
@@ -92,9 +78,6 @@ namespace DrugiProjekat.Services
             }
         }
 
-
-        // ciscenje u slucaju greske
-        // ako api poziv nije uspeo uklanja placeholder i budi cekajuce niti
         public void RemovePlaceholder(string key)
         {
             lock (_cacheLock)
@@ -108,9 +91,6 @@ namespace DrugiProjekat.Services
                 Monitor.PulseAll(_cacheLock);
             }
         }
-
-
-        // fifo izbacivanje
 
         private void EvictOldest()
         {
@@ -132,8 +112,6 @@ namespace DrugiProjekat.Services
             Logger.Warn("Eviction nije moguca - svi unosi su u stanju ucitavanja.");
         }
 
-
-        // ovde je samo ispis
         public void PrintStats()
         {
             lock (_cacheLock)
